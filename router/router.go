@@ -14,7 +14,7 @@ type Router struct {
 // NewRouter creates a new Router instance with optinal middlewares
 func NewRouter(middlewares ...Middleware) *Router {
 	return &Router{
-		ServerMux:   http.NewServeMux(),
+		ServeMux:    http.NewServeMux(),
 		middlewares: middlewares,
 	}
 }
@@ -34,4 +34,16 @@ func (r *Router) Handle(pattern string, handler http.Handler) {
 	}
 
 	r.ServeMux.Handle(pattern, handler)
+}
+
+func (r *Router) HandleFunc(pattern string, handlerFunc http.HandlerFunc) {
+	var handler http.Handler
+	for _, mw := range r.middlewares {
+		handler = mw(http.HandlerFunc(handlerFunc))
+	}
+	r.ServeMux.Handle(pattern, handler)
+}
+
+func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	router.ServeMux.ServeHTTP(w, r)
 }

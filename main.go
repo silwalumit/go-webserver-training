@@ -3,18 +3,23 @@ package main
 import (
 	"log"
 	"net/http"
-	"server/handlers"
 	"server/middleware"
+	"server/router"
 )
 
 func main() {
-	router := http.NewServeMux()
+	router := router.NewRouter()
 
-	router.HandleFunc("GET /", handlers.HelloWorld)
+	// add middlewares
+	router.Use(middleware.LoggingMiddleware)
 
+	router.HandleFunc("/items/{id}", func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		w.Write([]byte("Finding by id: " + id))
+	})
 	server := &http.Server{
 		Addr:    ":8000",
-		Handler: middleware.LoggingMiddleware(router),
+		Handler: router,
 	}
 
 	log.Println("Starting server on port :8000")
